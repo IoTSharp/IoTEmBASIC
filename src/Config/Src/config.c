@@ -2,6 +2,7 @@
 
 #include "Storage/Inc/app_eeprom.h"
 #include "Application/Inc/app_rtos.h"
+#include "Interpreter/Inc/app_basic.h"
 #include "Modem/Inc/bsp_air724.h"
 #include "Network/Ch395/Inc/bsp_ch395.h"
 #include "Bus/Rs485/Inc/bsp_rs485.h"
@@ -1468,6 +1469,13 @@ static void config_print_status(void) {
   ch395_board_status_t ch395_status = ch395_board_get_status();
   LOG_CMD_RESP("ch395.present=%u ver=0x%02X phy=0x%02X init=0x%02X", ch395_status.present ? 1U : 0U,
                ch395_status.version, ch395_status.phy_status, ch395_status.init_status);
+  app_basic_status_t basic_status = app_basic_get_status();
+  LOG_CMD_RESP("basic.loaded=%s size=%lu startup=%s import=%s import_name=%s import_slot=%s import_size=%lu",
+               basic_status.loaded_name, (unsigned long)basic_status.loaded_size,
+               eeprom_basic_script_startup_result_name(basic_status.startup_result),
+               app_basic_import_status_name(basic_status.last_import_status), basic_status.last_import_name,
+               eeprom_basic_script_slot_name(basic_status.last_import_slot),
+               (unsigned long)basic_status.last_import_size);
   config_print_rtos_status();
 }
 
@@ -1580,6 +1588,27 @@ static void config_print_eeprom_status(void) {
   LOG_CMD_RESP("eeprom.probe_interval_ms=%lu", saved_config.network_monitor.probe_interval_ms);
   LOG_CMD_RESP("eeprom.network_mode=%s", config_network_mode_name(saved_config.network_mode));
   LOG_CMD_RESP("eeprom.device_count=%u", saved_config.devices.count);
+
+  eeprom_basic_script_lifecycle_state_t lifecycle;
+  if (eeprom_get_basic_script_lifecycle_state(&lifecycle) != SUCCESS) {
+    LOG_CMD_RESP("eeprom.basic.lifecycle=read-failed");
+    return;
+  }
+
+  LOG_CMD_RESP("eeprom.basic.lifecycle.valid=%u", lifecycle.valid ? 1U : 0U);
+  LOG_CMD_RESP("eeprom.basic.lifecycle.active=%s", eeprom_basic_script_slot_name(lifecycle.active_slot));
+  LOG_CMD_RESP("eeprom.basic.lifecycle.candidate=%s",
+               lifecycle.has_candidate ? eeprom_basic_script_slot_name(lifecycle.candidate_slot) : "none");
+  LOG_CMD_RESP("eeprom.basic.lifecycle.previous=%s",
+               lifecycle.has_previous ? eeprom_basic_script_slot_name(lifecycle.previous_slot) : "none");
+  LOG_CMD_RESP("eeprom.basic.lifecycle.result=%s",
+               eeprom_basic_script_startup_result_name(lifecycle.last_result));
+  LOG_CMD_RESP("eeprom.basic.lifecycle.boot_count=%lu rollback_count=%lu",
+               (unsigned long)lifecycle.boot_count, (unsigned long)lifecycle.rollback_count);
+  LOG_CMD_RESP("eeprom.basic.lifecycle.last_attempt=%s last_success=%s last_failed=%s",
+               eeprom_basic_script_slot_name(lifecycle.last_attempt_slot),
+               eeprom_basic_script_slot_name(lifecycle.last_success_slot),
+               eeprom_basic_script_slot_name(lifecycle.last_failed_slot));
 }
 
 static void config_handle_shell_cmd(char *args) {

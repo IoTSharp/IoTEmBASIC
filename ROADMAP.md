@@ -1,6 +1,6 @@
 # IoTEmbedded 路线图
 
-> 整理日期：2026-05-31
+> 整理日期：2026-06-01
 >
 > 状态：✅ 已完成 ｜ 🚧 未完成/进行中 ｜ ⬜ 未开始 ｜ 🔁 持续维护
 >
@@ -26,14 +26,14 @@ IoTEmbedded 只承载开源的嵌入式 BASIC/C 运行时、板级适配、总�
 | `Config` | ✅ | 运行配置、网络配置、命令式配置查看/修改入口已落地。 |
 | `Devices` | 🚧 | 空调、电表、开关、离散量、温湿度、UPS、遥测上报等业务设备抽象已有实现，仍需收敛为可复用 profile。 |
 | `Display` | ✅ | ST7789 显示抽象和 Pandora LCD BASIC 图形入口已落地。 |
-| `Interpreter` | ✅ | MY-BASIC 内核、加载运行封装、IMPORT、错误输出、SERIAL/MODBUS/MQTT/JSON/CONFIG/FORMAT/QB4.5 图形函数注册已落地。 |
+| `Interpreter` | ✅ | MY-BASIC 内核、加载运行封装、脚本生命周期 managed startup、可插拔签名校验入口、IMPORT 可观测错误、错误输出、SERIAL/MODBUS/MQTT/JSON/CONFIG/FORMAT/QB4.5 图形函数注册已落地。 |
 | `Modem` | ✅ | Air724 基础适配已落地。 |
 | `Network` | 🚧 | CH395、Air724、AP6181 Socket 适配和网络管理已有实现，跨目标能力边界仍需固化。 |
 | `Platform/stm32` | 🚧 | STM32F103VETX、STM32L475VETX + FreeRTOS/CMSIS-RTOS2 工程已落地；非 STM32 与低资源 Linux 入口未落地。 |
 | `Protocol/Modbus` | ✅ | Modbus CRC、核心、Master、API 和 BASIC 绑定已落地。 |
 | `Protocol/Mqtt` | ✅ | MQTT client、发布/订阅/接收、句柄模型和 BASIC 绑定已落地。 |
 | `Protocol/Platform` | ✅ | 平台消息模块已落地。 |
-| `Storage` | 🚧 | EEPROM 配置存储、BASIC 双脚本槽、CRC 校验和 fallback 加载已落地；签名、激活版本和回滚策略仍需补齐。 |
+| `Storage` | ✅ | EEPROM 配置存储、BASIC 双脚本槽、CRC 校验、脚本包 metadata、签名 envelope、active/candidate/previous 生命周期状态和回滚记录已落地，并兼容旧 v1/v2 header。 |
 | `ThirdParty/Parson` | ✅ | JSON 依赖已接入，保持第三方源码原样。 |
 | `projects/stm32` | ✅ | F1/F103 与 L4/L475 VisualGDB/CMake 工程入口已落地。 |
 | `tools/VisualGDBBuild` | ✅ | F1/L4 命令行 build/clean/rebuild/flash/diagnose 包装工具已落地。 |
@@ -46,7 +46,7 @@ IoTEmbedded 只承载开源的嵌入式 BASIC/C 运行时、板级适配、总�
 | M1 BASIC 最小可运行 | ✅ | MY-BASIC 已集成，支持加载字符串脚本、执行、错误定位和打印重定向。 |
 | M2 BASIC 运行时函数注册 v1 | ✅ | SERIAL、MODBUS、MQTT、JSON、CONFIG、FORMAT、QB4.5 图形函数已按模块注册。 |
 | M3 首批 STM32/RTOS 工程 | ✅ | STM32F103VETX、STM32L475VETX 两个 FreeRTOS/CMSIS-RTOS2 工程已接入。 |
-| M4 脚本生命周期 v1 | 🚧 | EEPROM 双槽、CRC、IMPORT、fallback 已完成；签名、激活版本、正式回滚策略未完成。 |
+| M4 脚本生命周期 v1 | ✅ | EEPROM 双槽、CRC、脚本包 metadata、可插拔签名校验入口、IMPORT、active/candidate/previous 语义、启动失败回滚和状态记录已完成。 |
 | M5 多目标验证 | 🚧 | 两个 STM32/RTOS 目标已具备工程入口；低资源 Linux Profile 未开始。 |
 | M6 资源与稳定性基线 | 🚧 | 看门狗、任务心跳、栈余量查看已有实现；ROM/RAM/栈/启动耗时预算和回归记录未完成。 |
 | M7 低资源 Linux Profile | ⬜ | 尚无 `Platform/linux` 或 `projects/linux-*` 入口。 |
@@ -61,8 +61,8 @@ IoTEmbedded 只承载开源的嵌入式 BASIC/C 运行时、板级适配、总�
 | D2 | ✅ | STM32L475VETX / Pandora 工程入口、CubeMX 平台代码、linker script、VisualGDB 工程已落地。 |
 | D3 | ✅ | FreeRTOS + CMSIS-RTOS2 应用任务、任务心跳、看门狗线程和栈余量观测已落地。 |
 | D4 | ✅ | BASIC 解释器内核、`app_basic` 加载/运行封装、错误日志和打印输出适配已落地。 |
-| D5 | ✅ | EEPROM 配置读写、BASIC 脚本槽 header、CRC 校验、双槽读取和 fallback 加载已落地。 |
-| D6 | ✅ | BASIC `IMPORT` 按 EEPROM 槽内脚本名解析，兼容旧的 `app01/app02` 物理槽名称。 |
+| D5 | ✅ | EEPROM 配置读写、BASIC 脚本槽 v3 header、脚本包 metadata、签名 envelope、CRC 校验、双槽读取、managed startup、active/candidate/previous 状态和回滚记录已落地，并兼容旧 v1/v2 header。 |
+| D6 | ✅ | BASIC `IMPORT` 按 EEPROM 槽内脚本名解析，兼容旧的 `app01/app02` 物理槽名称，并记录依赖循环、缺失依赖、脚本大小超限等可观测错误。 |
 | D7 | ✅ | SERIAL / RS485 BASIC 函数和底层 UART/RS485 适配已落地。 |
 | D8 | ✅ | Modbus RTU 读写、CRC、Master API 和 BASIC 函数已落地。 |
 | D9 | ✅ | MQTT 句柄模型、connect/publish/subscribe/receive/ping/disconnect 和 BASIC 函数已落地。 |
@@ -88,10 +88,10 @@ IoTEmbedded 只承载开源的嵌入式 BASIC/C 运行时、板级适配、总�
 
 | 编号 | 状态 | 任务 |
 | --- | --- | --- |
-| P1.1 | 🚧 | 在现有 EEPROM 双槽和 CRC 基础上补齐脚本包 metadata：版本、创建时间/构建号、入口名、依赖脚本名。 |
-| P1.2 | ⬜ | 增加可插拔签名校验入口，运行时只消费上层下发的签名格式，不在本仓库写商业授权逻辑。 |
-| P1.3 | ⬜ | 明确 active / candidate / previous 槽位语义，补齐启动失败后的回滚策略和状态记录。 |
-| P1.4 | ⬜ | 为 IMPORT 增加依赖循环、缺失依赖、脚本大小超限的可观测错误。 |
+| P1.1 | ✅ | 已在 EEPROM BASIC 脚本槽 header 中补齐脚本包 metadata：版本、创建时间、构建号、入口名、依赖脚本名；旧 v1 header 仍可读取。 |
+| P1.2 | ✅ | 已增加 opaque 签名 envelope 与 `app_basic_set_signature_verifier(...)` 可插拔校验入口，运行时只消费上层下发的签名格式，不内置商业授权逻辑。 |
+| P1.3 | ✅ | 已明确 active / candidate / previous 槽位语义，新增 EEPROM 生命周期状态记录和 RTOS managed startup；candidate 加载、运行或启动复位失败会回滚 previous 并记录结果。 |
+| P1.4 | ✅ | 已为 IMPORT 增加 `last_import_status` 状态、日志和 `status` 输出，可区分依赖循环、缺失依赖、脚本大小超限、无效 header、读失败、签名拒绝和解析失败。 |
 
 ### P2 构建验证与资源基线
 

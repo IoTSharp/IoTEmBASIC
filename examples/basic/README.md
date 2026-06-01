@@ -4,6 +4,14 @@
 当前固件默认从 EEPROM 里的 `app01.bas` / `app02.bas` 读取脚本；这里的示例文件用于编写和演示脚本内容。
 `IMPORT` 参数是包内脚本名，不是物理槽位名；STM32 会按 EEPROM 槽里保存的脚本名做映射，例如把 `common.bas` 存入备份槽后，主脚本可使用 `IMPORT "common.bas"`。
 
+EEPROM BASIC 脚本槽使用 v3 header 时会随脚本保存包级 metadata：`package_version`、`created_at_unix`、`build_number`、`entry_name` 和最多 4 个依赖脚本名，并预留 opaque 签名 envelope：`format`、`flags` 和签名字节。旧 v1/v2 header 仍可读取，运行时会把槽内脚本名作为默认入口名；新写入接口是 `eeprom_write_basic_script_package(...)`，不需要签名时可继续使用 `eeprom_write_basic_script_with_metadata(...)` 或 `eeprom_write_basic_script(...)`。
+
+签名算法、密钥和授权语义由上层契约或产品集成提供；IoTEmbedded 只通过 `app_basic_set_signature_verifier(...)` 注册可插拔 verifier，并在主脚本和 `IMPORT` 脚本加载前消费签名 envelope。
+
+脚本生命周期在两个物理槽之外另存一个带 CRC 的 EEPROM 状态记录：`active` 是默认启动槽，`candidate` 是下一次优先试运行的新槽，`previous` 是 candidate 发布前最后一个已知可运行槽。`eeprom_set_basic_script_candidate(...)` 会把当前 active 记为 previous；RTOS 启动时会先试 candidate，加载或运行失败会自动回滚 previous，并记录 `boot_count`、`rollback_count`、最近尝试/成功/失败槽和启动结果。若 candidate 启动过程中被看门狗复位，下次上电会把上一次未完成的 `booting` 视作失败并回滚，避免坏候选反复启动。
+
+`IMPORT` 失败会记录可观测错误到 `app_basic_status_t.last_import_status`，并在日志和 `status` 命令中输出最近依赖名、槽位和大小。当前可区分 `missing-dependency`、`dependency-cycle`、`script-size-exceeded`、`invalid-header`、`read-failed`、`signature-rejected`、`parse-failed` 和 `depth-exceeded`。
+
 统一 BASIC API 清单位于 `../../docs/basic/basic-api.v1.json`，其中 `functionSignatures` 是逐函数 canonical 列表；错误码、超时、句柄生命周期和内存所有权约定位于 `../../docs/basic/api-contracts.md`。关键函数 smoke 脚本位于 `smoke/`，预期输出由 `smoke/smoke-manifest.v1.json` 描述，后续 host harness、CodeGen 和低资源 Linux Profile 应优先消费这些机器可读文件。
 
 ## MQTT 函数

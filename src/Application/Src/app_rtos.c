@@ -206,11 +206,20 @@ static void app_rtos_mqtt_rx_thread(void *argument) {
 static void app_rtos_basic_thread(void *argument) {
   (void)argument;
 
-  if (app_basic_reload_and_run(APP_BASIC_SLOT_PRIMARY) == SUCCESS) {
+  if (app_basic_reload_and_run_managed() == SUCCESS) {
     app_basic_status_t status = app_basic_get_status();
-    LOG_INFO("BASIC script thread executed %s size=%lu", status.loaded_name, (uint32_t)status.loaded_size);
+    LOG_INFO("BASIC script thread executed %s entry=%s package=%s build=%lu deps=%u size=%lu startup=%s rollback=%u import=%s",
+             status.loaded_name,
+             status.entry_name, status.package_version, (unsigned long)status.build_number,
+             (unsigned int)status.dependency_count, (unsigned long)status.loaded_size,
+             eeprom_basic_script_startup_result_name(status.startup_result), status.rollback_performed ? 1U : 0U,
+             app_basic_import_status_name(status.last_import_status));
   } else {
-    LOG_WARNING("BASIC script thread idle: no runnable script");
+    app_basic_status_t status = app_basic_get_status();
+    LOG_WARNING("BASIC script thread idle: no runnable script startup=%s rollback=%u import=%s name=%s",
+                eeprom_basic_script_startup_result_name(status.startup_result),
+                status.rollback_performed ? 1U : 0U, app_basic_import_status_name(status.last_import_status),
+                status.last_import_name);
   }
 
   for (;;) {
